@@ -445,7 +445,9 @@
         <label class="field-label">Status</label>
         <select id="f-status" onchange="
   const isDone = this.value==='done';
-  if(isDone){document.getElementById('f-pct').value=100;document.getElementById('pct-label').textContent='100%';}
+  const newPct = STATUS_PCT[this.value] ?? 0;
+  document.getElementById('f-pct').value = newPct;
+  document.getElementById('pct-label').textContent = newPct+'%';
   document.getElementById('conclusao-field').style.display = isDone ? '' : 'none';
   if(isDone && !document.getElementById('f-conclusao').value){
     document.getElementById('f-conclusao').value = new Date().toISOString().split('T')[0];
@@ -498,7 +500,7 @@
       <input type="date" id="f-conclusao">
     </div>
 
-    <div class="field-group">
+    <div class="field-group" style="display:none;">
       <label class="field-label">Conclusão: <span id="pct-label">0%</span></label>
       <input type="range" id="f-pct" min="0" max="100" step="5" value="0"
              oninput="document.getElementById('pct-label').textContent=this.value+'%'"
@@ -555,6 +557,8 @@ const AT = {
   }
 };
 
+const STATUS_PCT = { todo: 0, doing: 67, review: 33, done: 100 };
+
 function atToTask(rec) {
   const f = rec.fields;
   return {
@@ -566,7 +570,7 @@ function atToTask(rec) {
     status:    f.status    ||'todo',
     emp:       f.emp       ||'',
     desc:      f.desc      ||'',
-    pct:       f.pct       ||0,
+    pct:       STATUS_PCT[f.status||'todo'] ?? (f.pct||0),
     criada:    rec.createdTime || f.criada || '',
     conclusao: f.conclusao ||'',
   };
@@ -833,7 +837,11 @@ async function drop(e, status){
     render();
     setSyncStatus('loading','↻ Salvando...');
     const today = new Date().toISOString().split('T')[0];
-    const fields = status==='done' ? {status, pct:100, conclusao:today} : {status, conclusao:null};
+    const newPct = STATUS_PCT[status] ?? 0;
+    t.pct = newPct;
+    const fields = status==='done'
+      ? {status, pct: newPct, conclusao: today}
+      : {status, pct: newPct, conclusao: null};
     try { await AT.update(t.id, fields); setSyncStatus('ok','✓ Salvo'); }
     catch(err){ setSyncStatus('err','✗ Erro ao salvar'); }
   }
@@ -869,7 +877,7 @@ async function saveTask(){
   const titulo = document.getElementById('f-titulo').value.trim();
   if (!titulo){ document.getElementById('f-titulo').style.borderColor='var(--danger)'; return; }
   const status = document.getElementById('f-status').value;
-  const pct = status==='done' ? 100 : parseInt(document.getElementById('f-pct').value)||0;
+  const pct = STATUS_PCT[status] ?? 0;
   const conclusaoVal = document.getElementById('f-conclusao').value;
   const data = {
     titulo,
