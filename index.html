@@ -161,6 +161,17 @@
 
   .empty-col { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 18px 8px; font-style: italic; }
 
+  /* ---------- CORES POR CIDADE ---------- */
+  .city-marilia    { background: #FFFF99 !important; border-color: #CCCC00 !important; }
+  .city-primavera  { background: #FFE5B4 !important; border-color: #CC9900 !important; }
+  .city-sinop      { background: #CCF0FF !important; border-color: #0090CC !important; }
+  .city-campoverde { background: #D6F0B2 !important; border-color: #6AAA20 !important; }
+  .city-campomourao{ background: #EEE0FF !important; border-color: #9966CC !important; }
+  .city-sorriso    { background: #EEF5FC !important; border-color: #AACCDD !important; }
+  .city-cuiaba     { background: #FDDCBB !important; border-color: #CC5500 !important; }
+  .city-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+    background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.55); letter-spacing: 0.03em; }
+
   /* ---------- MODAL ---------- */
   .overlay {
     position: fixed; inset: 0; background: rgba(20,20,20,0.45); backdrop-filter: blur(2px);
@@ -582,12 +593,15 @@ function render(){
 function taskCard(t){
   const due = dueInfo(t.prazo, t.status);
   const dueHtml = due ? `<span class="due ${due.cls}">${due.text}</span>` : '';
+  const cidade = EMP_CIDADE[t.emp] || '';
+  const cityClass = cidade ? 'city-'+cidade : '';
+  const cityBadge = cidade ? `<span class="city-badge">${CIDADE_LABEL[cidade]||cidade}</span>` : '';
   const pct = parseInt(t.pct)||0;
   const pctHtml = `<div class="task-progress">
     <div class="progress-bar-wrap"><div class="progress-bar-fill${pct>=100?' full':''}" style="width:${pct}%"></div></div>
     <span class="progress-label">${pct}%</span>
   </div>`;
-  return `<div class="task" draggable="true" data-id="${t.id}"
+  return `<div class="task ${cityClass}" draggable="true" data-id="${t.id}"
                ondragstart="dragStart(event,'${t.id}')" ondragend="this.classList.remove('dragging')"
                onclick="openModal('${t.id}')">
     <div class="task-prio prio-${t.prio||'media'}"></div>
@@ -595,10 +609,41 @@ function taskCard(t){
     <div class="task-meta">
       <span class="pill pill-${t.quem}">${PEOPLE[t.quem]||t.quem}</span>
       ${dueHtml}
+      ${cityBadge}
     </div>
     ${pctHtml}
   </div>`;
 }
+
+const EMP_CIDADE = {
+  'CONSÓRCIO CIDADE ALTA SINOP': 'sinop',
+  'BRAVANTE E CAMPO INCORPORAÇÕES IMOBILIÁRIAS LTDA': 'sinop',
+  'DF CAMPO INCORPORAÇÕES IMOBILIÁRIAS LTDA': 'primavera',
+  'INCORPORADORA LOTEAMENTO FONTANA LTDA': 'primavera',
+  'BCV INCORPORADORA DE IMÓVEIS LTDA': 'campoverde',
+  'JARDIM ORIENTE EMPREEDIMENTOS IMOBILIÁRIOS LTDA': 'sinop',
+  'JAM EMPREENDIMENTOS IMOBILIÁRIOS E COMERCIAIS LTDA': 'primavera',
+  'BURITIS INCORPORADORA DE IMÓVEIS LTDA': 'primavera',
+  'SANTA TEREZINHA INCORPORADORA DE IMÓVEIS LTDA': 'primavera',
+  'NOVA BURITIS INCORPORADORA DE IMÓVEIS LTDA': 'primavera',
+  'BURITIS UNIVERSITÁRIO INCORPORADORA DE IMÓVEIS LTDA': 'primavera',
+  'MORADA DO SOL INCORPORADORA DE IMÓVEIS LTDA': 'primavera',
+  'PRIMAVERA INCORPORADORA DE IMÓVEIS LTDA': 'primavera',
+  'CAMPO INCORPORADORA LTDA - FILIAL SINOP': 'sinop',
+  'CAMPO INCORPORADORA LTDA - FILIAL MARÍLIA': 'marilia',
+  'CAMPO INCORPORADORA LTDA': 'campomourao',
+  'CIDADE ALTA INCORPORADORA LTDA': 'campomourao',
+  'CAMPO INCORPORADORA LTDA - FILIAL PRIMAVERA': 'primavera',
+  'TIVOLI INCORPORAÇÕES IMOBILIARIAS LTDA (SINOP)': 'sinop',
+  'RESIDENCIAL INCORPORADORA SANTO ANGELO LTDA': 'sorriso',
+  'ORIGEM PLANEJAMENTO E DESENVOLVIMENTO IMOBILIÁRIO LTDA': 'cuiaba',
+  'CONSÓRCIO TERRAS DE SANTANA': 'marilia',
+};
+const CIDADE_LABEL = {
+  sinop:'Sinop', primavera:'Primavera', marilia:'Marília',
+  campoverde:'Campo Verde', campomourao:'Campo Mourão',
+  sorriso:'Sorriso', cuiaba:'Cuiabá'
+};
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
