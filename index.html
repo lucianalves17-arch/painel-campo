@@ -133,6 +133,14 @@
     cursor: grab; transition: box-shadow 0.15s, transform 0.05s; position: relative;
   }
   .task:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.10); }
+  .task.today-alert {
+    box-shadow: 0 0 0 2px var(--danger), 0 2px 8px rgba(163,45,45,0.25) !important;
+    animation: pulse-alert 2s ease-in-out infinite;
+  }
+  @keyframes pulse-alert {
+    0%,100% { box-shadow: 0 0 0 2px var(--danger), 0 2px 8px rgba(163,45,45,0.15); }
+    50%      { box-shadow: 0 0 0 4px var(--danger), 0 4px 16px rgba(163,45,45,0.35); }
+  }
   .task.dragging { opacity: 0.4; }
   .task-prio { position: absolute; top: 0; right: 0; bottom: 0; width: 3px; border-radius: 0 var(--radius) var(--radius) 0; }
   .prio-alta { background: var(--danger); }
@@ -431,7 +439,14 @@
       </div>
       <div class="field-group">
         <label class="field-label">Status</label>
-        <select id="f-status" onchange="if(this.value==='done'){document.getElementById('f-pct').value=100;document.getElementById('pct-label').textContent='100%';}">
+        <select id="f-status" onchange="
+  const isDone = this.value==='done';
+  if(isDone){document.getElementById('f-pct').value=100;document.getElementById('pct-label').textContent='100%';}
+  document.getElementById('conclusao-field').style.display = isDone ? '' : 'none';
+  if(isDone && !document.getElementById('f-conclusao').value){
+    document.getElementById('f-conclusao').value = new Date().toISOString().split('T')[0];
+  }
+">
           <option value="todo">A fazer</option>
           <option value="doing">Em andamento</option>
           <option value="review">Em revisão</option>
@@ -472,6 +487,11 @@
     <div class="field-group">
       <label class="field-label">Detalhes / observações</label>
       <textarea id="f-desc" rows="3" placeholder="O que precisa ser feito, critérios de conclusão, links..."></textarea>
+    </div>
+
+    <div class="field-group" id="conclusao-field" style="display:none;">
+      <label class="field-label">Data de conclusão</label>
+      <input type="date" id="f-conclusao">
     </div>
 
     <div class="field-group">
@@ -543,14 +563,16 @@ function atToTask(rec) {
     emp:   f.emp    ||'',
     desc:  f.desc   ||'',
     pct:   f.pct    ||0,
-    criada:f.criada ||'',
+    criada:    f.criada    ||'',
+    conclusao: f.conclusao ||'',
   };
 }
 
 function taskFields(t) {
   return { titulo:t.titulo, quem:t.quem, prio:t.prio,
            prazo:t.prazo||null, status:t.status,
-           emp:t.emp, desc:t.desc, pct:parseInt(t.pct)||0 };
+           emp:t.emp, desc:t.desc, pct:parseInt(t.pct)||0,
+           conclusao:t.conclusao||null };
 }
 
 /* ============ STATE ============ */
@@ -667,7 +689,14 @@ function dueInfo(prazo, status){
 
 function render(){
   const term = document.getElementById('search').value.trim().toLowerCase();
-  const visible = tasks.filter(t => {
+  // Ordenar por prazo (sem prazo vai por último)
+  const sorted_tasks = [...tasks].sort((a,b) => {
+    if (!a.prazo && !b.prazo) return 0;
+    if (!a.prazo) return 1;
+    if (!b.prazo) return -1;
+    return new Date(a.prazo) - new Date(b.prazo);
+  });
+  const visible = sorted_tasks.filter(t => {
     if (filterWho!=='all' && t.quem!==filterWho) return false;
     if (term && !((t.titulo||'').toLowerCase().includes(term)||(t.emp||'').toLowerCase().includes(term)||(t.desc||'').toLowerCase().includes(term))) return false;
     return true;
@@ -711,13 +740,19 @@ function taskCard(t){
   const dueHtml = due ? `<span class="due ${due.cls}">${due.text}</span>` : '';
   const cidade = EMP_CIDADE[t.emp] || '';
   const cityClass = cidade ? 'city-'+cidade : '';
+  const isToday = t.prazo && t.status!=='done' && (() => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const d = new Date(t.prazo+'T00:00:00');
+    return d.getTime()===today.getTime();
+  })();
+  const todayClass = isToday ? ' today-alert' : '';
   const cityBadge = cidade ? `<span class="city-badge">${CIDADE_LABEL[cidade]||cidade}</span>` : '';
   const pct = parseInt(t.pct)||0;
   const pctHtml = `<div class="task-progress">
     <div class="progress-bar-wrap"><div class="progress-bar-fill${pct>=100?' full':''}" style="width:${pct}%"></div></div>
     <span class="progress-label">${pct}%</span>
   </div>`;
-  return `<div class="task ${cityClass}" draggable="true" data-id="${t.id}"
+  return `<div class="task ${cityClass}${todayClass}" draggable="true" data-id="${t.id}"
                ondragstart="dragStart(event,'${t.id}')" ondragend="this.classList.remove('dragging')"
                onclick="openModal('${t.id}')">
     <div class="task-prio prio-${t.prio||'media'}"></div>
@@ -775,7 +810,8 @@ async function drop(e, status){
     if (status==='done') t.pct = 100;
     render();
     setSyncStatus('loading','↻ Salvando...');
-    const fields = status==='done' ? {status, pct:100} : {status};
+    const today = new Date().toISOString().split('T')[0];
+    const fields = status==='done' ? {status, pct:100, conclusao:today} : {status, conclusao:null};
     try { await AT.update(t.id, fields); setSyncStatus('ok','✓ Salvo'); }
     catch(err){ setSyncStatus('err','✗ Erro ao salvar'); }
   }
@@ -799,6 +835,9 @@ function openModal(id){
   const pctVal = parseInt(t.pct)||0;
   document.getElementById('f-pct').value = pctVal;
   document.getElementById('pct-label').textContent = pctVal+'%';
+  const isConcluida = (t.status||'todo')==='done';
+  document.getElementById('conclusao-field').style.display = isConcluida ? '' : 'none';
+  document.getElementById('f-conclusao').value = t.conclusao||'';
   document.getElementById('overlay').classList.add('show');
   setTimeout(()=>document.getElementById('f-titulo').focus(),50);
 }
@@ -809,15 +848,17 @@ async function saveTask(){
   if (!titulo){ document.getElementById('f-titulo').style.borderColor='var(--danger)'; return; }
   const status = document.getElementById('f-status').value;
   const pct = status==='done' ? 100 : parseInt(document.getElementById('f-pct').value)||0;
+  const conclusaoVal = document.getElementById('f-conclusao').value;
   const data = {
     titulo,
-    quem:  document.getElementById('f-quem').value,
-    prio:  document.getElementById('f-prio').value,
-    prazo: document.getElementById('f-prazo').value||null,
+    quem:     document.getElementById('f-quem').value,
+    prio:     document.getElementById('f-prio').value,
+    prazo:    document.getElementById('f-prazo').value||null,
     status,
-    emp:   document.getElementById('f-emp').value.trim(),
-    desc:  document.getElementById('f-desc').value.trim(),
+    emp:      document.getElementById('f-emp').value.trim(),
+    desc:     document.getElementById('f-desc').value.trim(),
     pct,
+    conclusao: status==='done' ? (conclusaoVal || new Date().toISOString().split('T')[0]) : null,
   };
   const currentEditingId = editingId;
   closeModal();
