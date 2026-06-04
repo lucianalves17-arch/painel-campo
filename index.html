@@ -221,6 +221,66 @@
   .test-result.ok  { color:var(--success); }
   .test-result.err { color:var(--danger); }
 
+
+  /* ---------- TABS ---------- */
+  .tab-bar { display:flex; gap:6px; margin-bottom:1rem; }
+  .tab {
+    padding:8px 20px; border-radius:var(--radius); border:1px solid var(--border);
+    background:var(--bg); color:var(--text-secondary); font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .tab:hover { background:var(--bg-secondary); }
+  .tab.active { background:var(--campo-petroleo); color:#fff; border-color:var(--campo-petroleo); }
+
+  /* ---------- RELATÓRIOS ---------- */
+  .rpt-filters {
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:14px 16px; margin-bottom:1rem; box-shadow:var(--shadow);
+    display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;
+  }
+  .rpt-filter { display:flex; flex-direction:column; gap:4px; }
+  .rpt-filter label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-tertiary); }
+  .rpt-filter input, .rpt-filter select {
+    font-family:inherit; font-size:13px; padding:7px 10px;
+    border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-secondary); outline:none;
+  }
+  .rpt-filter input:focus, .rpt-filter select:focus { border-color:var(--blue-400); background:#fff; }
+  .btn-rpt { align-self:flex-end; background:var(--campo-petroleo); color:#fff; border-color:var(--campo-petroleo); font-weight:600; white-space:nowrap; }
+  .btn-rpt:hover { background:var(--blue-600); border-color:var(--blue-600); }
+
+  .rpt-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:1rem; }
+  .rpt-card {
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:14px 16px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .rpt-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--campo-petroleo); }
+  .rpt-card.c-green::before { background:var(--campo-verde); }
+  .rpt-card.c-amber::before { background:var(--amber-600); }
+  .rpt-card.c-red::before { background:var(--danger); }
+  .rpt-num { font-size:28px; font-weight:700; color:var(--campo-petroleo); line-height:1; }
+  .rpt-card.c-green .rpt-num { color:var(--green-800); }
+  .rpt-card.c-amber .rpt-num { color:var(--amber-800); }
+  .rpt-card.c-red .rpt-num { color:var(--danger); }
+  .rpt-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-secondary); margin-top:6px; }
+
+  .rpt-section { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .rpt-section-title { font-size:13px; font-weight:700; color:var(--campo-petroleo); margin-bottom:12px; text-transform:uppercase; letter-spacing:.04em; }
+
+  .rpt-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .rpt-table th { text-align:left; padding:7px 10px; background:var(--bg-secondary); font-weight:700; color:var(--text-secondary); text-transform:uppercase; font-size:10px; letter-spacing:.05em; border-bottom:2px solid var(--border); }
+  .rpt-table td { padding:7px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .rpt-table tr:last-child td { border-bottom:none; }
+  .rpt-table tr:hover td { background:var(--bg-secondary); }
+  .pct-mini-wrap { display:flex; align-items:center; gap:6px; }
+  .pct-mini-bar { flex:1; height:4px; background:var(--bg-tertiary); border-radius:4px; overflow:hidden; min-width:40px; }
+  .pct-mini-fill { height:100%; border-radius:4px; background:var(--campo-petroleo); }
+  .pct-mini-fill.full { background:var(--campo-verde); }
+  .status-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; white-space:nowrap; }
+  .sb-todo   { background:var(--gray-50);   color:var(--gray-800); }
+  .sb-doing  { background:var(--blue-50);   color:var(--blue-800); }
+  .sb-review { background:var(--amber-50);  color:var(--amber-800); }
+  .sb-done   { background:var(--green-50);  color:var(--green-800); }
+  .empty-rpt { text-align:center; padding:32px; color:var(--text-tertiary); font-style:italic; font-size:13px; }
+
   footer {
     text-align: center; font-size: 11px; color: var(--text-tertiary);
     margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border);
@@ -256,6 +316,12 @@
     </div>
   </div>
 
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab active" id="tab-board" onclick="switchTab('board')">📋 Painel</button>
+    <button class="tab" id="tab-report" onclick="switchTab('report')">📊 Relatórios</button>
+  </div>
+
   <!-- STATS -->
   <div class="stats" id="stats"></div>
 
@@ -272,6 +338,56 @@
 
   <!-- BOARD -->
   <div class="board" id="board"></div>
+
+
+  <!-- REPORTS PANEL -->
+  <div id="report-panel" style="display:none;">
+    <div class="rpt-filters">
+      <div class="rpt-filter">
+        <label>De</label>
+        <input type="date" id="r-from">
+      </div>
+      <div class="rpt-filter">
+        <label>Até</label>
+        <input type="date" id="r-to">
+      </div>
+      <div class="rpt-filter">
+        <label>Responsável</label>
+        <select id="r-who">
+          <option value="">Todos</option>
+          <option value="ariel">Ariel</option>
+          <option value="mario">Mário</option>
+          <option value="lucian">Lucian</option>
+        </select>
+      </div>
+      <div class="rpt-filter">
+        <label>Cidade</label>
+        <select id="r-cidade">
+          <option value="">Todas</option>
+          <option value="sinop">Sinop</option>
+          <option value="primavera">Primavera do Leste</option>
+          <option value="marilia">Marília</option>
+          <option value="campoverde">Campo Verde</option>
+          <option value="campomourao">Campo Mourão</option>
+          <option value="sorriso">Sorriso</option>
+          <option value="cuiaba">Cuiabá</option>
+        </select>
+      </div>
+      <div class="rpt-filter">
+        <label>Status</label>
+        <select id="r-status">
+          <option value="">Todos</option>
+          <option value="todo">A fazer</option>
+          <option value="doing">Em andamento</option>
+          <option value="review">Em revisão</option>
+          <option value="done">Concluída</option>
+        </select>
+      </div>
+      <button class="btn-rpt" onclick="renderReport()">Gerar relatório</button>
+    </div>
+
+    <div id="rpt-output"></div>
+  </div>
 
   <footer>Campo Incorporadora · Controladoria · Painel de Tarefas</footer>
 </div>
@@ -740,6 +856,127 @@ document.addEventListener('keydown', e => {
     closeSettings();
   }
 });
+
+/* ============ TABS ============ */
+let currentTab = 'board';
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-board').classList.toggle('active', tab==='board');
+  document.getElementById('tab-report').classList.toggle('active', tab==='report');
+  document.querySelector('.stats').style.display   = tab==='board' ? '' : 'none';
+  document.querySelector('.toolbar').style.display = tab==='board' ? '' : 'none';
+  document.getElementById('board').style.display   = tab==='board' ? '' : 'none';
+  document.getElementById('report-panel').style.display = tab==='report' ? '' : 'none';
+  if (tab==='report') renderReport();
+}
+
+/* ============ REPORTS ============ */
+const STATUS_LABEL = {todo:'A fazer', doing:'Em andamento', review:'Em revisão', done:'Concluída'};
+const STATUS_CLS   = {todo:'sb-todo', doing:'sb-doing', review:'sb-review', done:'sb-done'};
+
+function renderReport() {
+  const from   = document.getElementById('r-from').value;
+  const to     = document.getElementById('r-to').value;
+  const who    = document.getElementById('r-who').value;
+  const cidade = document.getElementById('r-cidade').value;
+  const status = document.getElementById('r-status').value;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let filtered = tasks.filter(t => {
+    if (who    && t.quem !== who) return false;
+    if (status && t.status !== status) return false;
+    if (cidade && EMP_CIDADE[t.emp] !== cidade) return false;
+    if (from || to) {
+      const prazo = t.prazo ? new Date(t.prazo+'T00:00:00') : null;
+      if (from && (!prazo || prazo < new Date(from+'T00:00:00'))) return false;
+      if (to   && (!prazo || prazo > new Date(to+'T00:00:00')))   return false;
+    }
+    return true;
+  });
+
+  const total     = filtered.length;
+  const concluidas= filtered.filter(t=>t.status==='done').length;
+  const emAberto  = filtered.filter(t=>t.status!=='done').length;
+  const atrasadas = filtered.filter(t=>t.status!=='done'&&t.prazo&&new Date(t.prazo+'T00:00:00')<today).length;
+  const avgPct    = total ? Math.round(filtered.reduce((s,t)=>s+(parseInt(t.pct)||0),0)/total) : 0;
+
+  // Produtividade por pessoa
+  const pessoas = ['ariel','mario','lucian'];
+  const prodRows = pessoas.map(p => {
+    const mine = filtered.filter(t=>t.quem===p);
+    if (!mine.length) return '';
+    const mc = mine.filter(t=>t.status==='done').length;
+    const ma = mine.filter(t=>t.status!=='done'&&t.prazo&&new Date(t.prazo+'T00:00:00')<today).length;
+    const mp = mine.length ? Math.round(mine.reduce((s,t)=>s+(parseInt(t.pct)||0),0)/mine.length) : 0;
+    return `<tr>
+      <td><strong>${PEOPLE[p]}</strong></td>
+      <td style="text-align:center">${mine.length}</td>
+      <td style="text-align:center">${mc}</td>
+      <td style="text-align:center">${mine.length-mc}</td>
+      <td style="text-align:center;color:var(--danger)">${ma}</td>
+      <td>
+        <div class="pct-mini-wrap">
+          <div class="pct-mini-bar"><div class="pct-mini-fill${mp>=100?' full':''}" style="width:${mp}%"></div></div>
+          <span style="font-size:11px;font-weight:700;color:var(--text-secondary);white-space:nowrap">${mp}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).filter(Boolean).join('');
+
+  // Task list
+  const sorted = [...filtered].sort((a,b)=>{
+    if (!a.prazo && !b.prazo) return 0;
+    if (!a.prazo) return 1;
+    if (!b.prazo) return -1;
+    return new Date(a.prazo) - new Date(b.prazo);
+  });
+  const taskRows = sorted.map(t => {
+    const pct = parseInt(t.pct)||0;
+    const prazoStr = t.prazo ? new Date(t.prazo+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+    const isLate = t.status!=='done' && t.prazo && new Date(t.prazo+'T00:00:00') < today;
+    const cidade = EMP_CIDADE[t.emp] ? CIDADE_LABEL[EMP_CIDADE[t.emp]] : '';
+    return `<tr>
+      <td><strong>${escapeHtml(t.titulo||'(sem título)')}</strong></td>
+      <td><span class="pill pill-${t.quem}" style="font-size:11px">${PEOPLE[t.quem]||t.quem}</span></td>
+      <td><span class="status-badge ${STATUS_CLS[t.status]||''}">${STATUS_LABEL[t.status]||t.status}</span></td>
+      <td style="color:${isLate?'var(--danger)':'inherit'};font-size:12px">${prazoStr}</td>
+      <td style="font-size:11px;color:var(--text-secondary)">${escapeHtml(cidade)}</td>
+      <td>
+        <div class="pct-mini-wrap">
+          <div class="pct-mini-bar"><div class="pct-mini-fill${pct>=100?' full':''}" style="width:${pct}%"></div></div>
+          <span style="font-size:11px;font-weight:700;color:var(--text-secondary)">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('rpt-output').innerHTML = `
+    <div class="rpt-summary">
+      <div class="rpt-card">        <div class="rpt-num">${total}</div><div class="rpt-lbl">Total filtrado</div></div>
+      <div class="rpt-card c-green"><div class="rpt-num">${concluidas}</div><div class="rpt-lbl">Concluídas</div></div>
+      <div class="rpt-card c-amber"><div class="rpt-num">${emAberto}</div><div class="rpt-lbl">Em aberto</div></div>
+      <div class="rpt-card c-red">  <div class="rpt-num">${atrasadas}</div><div class="rpt-lbl">Atrasadas</div></div>
+      <div class="rpt-card">        <div class="rpt-num">${avgPct}%</div><div class="rpt-lbl">Conclusão média</div></div>
+    </div>
+
+    ${prodRows ? `<div class="rpt-section">
+      <div class="rpt-section-title">Produtividade por responsável</div>
+      <table class="rpt-table">
+        <thead><tr><th>Pessoa</th><th>Total</th><th>Concluídas</th><th>Em aberto</th><th>Atrasadas</th><th>% Médio</th></tr></thead>
+        <tbody>${prodRows}</tbody>
+      </table>
+    </div>` : ''}
+
+    <div class="rpt-section">
+      <div class="rpt-section-title">Tarefas (${total})</div>
+      ${taskRows ? `<table class="rpt-table">
+        <thead><tr><th>Título</th><th>Responsável</th><th>Status</th><th>Prazo</th><th>Cidade</th><th>Conclusão</th></tr></thead>
+        <tbody>${taskRows}</tbody>
+      </table>` : '<div class="empty-rpt">Nenhuma tarefa encontrada com os filtros selecionados.</div>'}
+    </div>
+  `;
+}
 </script>
 
 <!-- SETTINGS MODAL -->
