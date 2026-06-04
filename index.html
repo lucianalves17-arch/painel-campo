@@ -634,12 +634,13 @@ async function saveTask(){
     desc:  document.getElementById('f-desc').value.trim(),
     pct,
   };
+  const currentEditingId = editingId;
   closeModal();
   setSyncStatus('loading','↻ Salvando...');
   try {
-    if (editingId) {
-      await AT.update(editingId, taskFields({...data}));
-      Object.assign(tasks.find(x=>x.id===editingId), data);
+    if (currentEditingId) {
+      await AT.update(currentEditingId, taskFields({...data}));
+      Object.assign(tasks.find(x=>x.id===currentEditingId), data);
     } else {
       data.criada = new Date().toISOString();
       const rec = await AT.create(taskFields(data));
