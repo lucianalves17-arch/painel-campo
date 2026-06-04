@@ -179,6 +179,10 @@
   .city-cuiaba     { background: #FDDCBB !important; border-color: #CC5500 !important; }
   .city-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
     background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.55); letter-spacing: 0.03em; }
+  .days-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+    background: var(--bg-tertiary); color: var(--text-tertiary); letter-spacing: 0.02em; white-space:nowrap; }
+  .days-badge.warn { background: var(--warning-bg); color: var(--warning); }
+  .days-badge.alert { background: var(--danger-bg); color: var(--danger); }
 
   /* ---------- MODAL ---------- */
   .overlay {
@@ -554,16 +558,16 @@ const AT = {
 function atToTask(rec) {
   const f = rec.fields;
   return {
-    id:    rec.id,
-    titulo:f.titulo ||'',
-    quem:  f.quem   ||'ariel',
-    prio:  f.prio   ||'media',
-    prazo: f.prazo  ||'',
-    status:f.status ||'todo',
-    emp:   f.emp    ||'',
-    desc:  f.desc   ||'',
-    pct:   f.pct    ||0,
-    criada:    f.criada    ||'',
+    id:        rec.id,
+    titulo:    f.titulo    ||'',
+    quem:      f.quem      ||'ariel',
+    prio:      f.prio      ||'media',
+    prazo:     f.prazo     ||'',
+    status:    f.status    ||'todo',
+    emp:       f.emp       ||'',
+    desc:      f.desc      ||'',
+    pct:       f.pct       ||0,
+    criada:    rec.createdTime || f.criada || '',
     conclusao: f.conclusao ||'',
   };
 }
@@ -740,6 +744,23 @@ function taskCard(t){
   const dueHtml = due ? `<span class="due ${due.cls}">${due.text}</span>` : '';
   const cidade = EMP_CIDADE[t.emp] || '';
   const cityClass = cidade ? 'city-'+cidade : '';
+
+  // Dias em aberto / dias para concluir
+  let daysBadge = '';
+  if (t.criada) {
+    const criada = new Date(t.criada);
+    const today  = new Date();
+    const days   = Math.floor((today - criada) / 86400000);
+    if (t.status === 'done' && t.conclusao) {
+      const conc = new Date(t.conclusao + 'T00:00:00');
+      const took = Math.floor((conc - criada) / 86400000);
+      daysBadge = `<span class="days-badge">✓ ${took}d</span>`;
+    } else if (t.status !== 'done') {
+      const cls = days >= 15 ? 'alert' : days >= 7 ? 'warn' : '';
+      daysBadge = `<span class="days-badge ${cls}">⏳ ${days}d</span>`;
+    }
+  }
+
   const isToday = t.prazo && t.status!=='done' && (() => {
     const today = new Date(); today.setHours(0,0,0,0);
     const d = new Date(t.prazo+'T00:00:00');
@@ -761,6 +782,7 @@ function taskCard(t){
       <span class="pill pill-${t.quem}">${PEOPLE[t.quem]||t.quem}</span>
       ${dueHtml}
       ${cityBadge}
+      ${daysBadge}
     </div>
     ${pctHtml}
   </div>`;
