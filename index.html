@@ -557,7 +557,7 @@ const AT = {
   }
 };
 
-const STATUS_PCT = { todo: 0, doing: 33, review: 67, done: 100 };
+const STATUS_PCT = { todo: 0, doing: 67, review: 33, done: 100 };
 
 function atToTask(rec) {
   const f = rec.fields;
@@ -622,7 +622,7 @@ async function loadTasks() {
 
 function scheduleRefresh() {
   if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(loadTasks, 30000);
+  refreshTimer = setInterval(loadTasks, 120000);
 }
 
 /* ============ INIT ============ */
