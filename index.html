@@ -621,8 +621,9 @@ async function loadTasks() {
 }
 
 function scheduleRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(loadTasks, 120000);
+  // Sincronização automática desativada até 01/08 para economizar API
+  // if (refreshTimer) clearInterval(refreshTimer);
+  // refreshTimer = setInterval(loadTasks, 120000);
 }
 
 /* ============ INIT ============ */
